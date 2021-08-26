@@ -1,0 +1,16 @@
+[
+{
+  "modid": "binsnipe",
+  "name": "BIN Sniper",
+  "description": "Finds profitable BIN to BIN flips on the auction house.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["BoschMods"],
+  "credits": "BoschMods: Literally everything",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
