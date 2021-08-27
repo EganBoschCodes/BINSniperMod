@@ -1,11 +1,10 @@
 package com.binmod.async;
 
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 import com.binmod.datatypes.AuctionHouse;
 import com.binmod.datatypes.AuctionsResponse;
@@ -15,9 +14,11 @@ import com.binmod.main.Helpers;
 import com.google.gson.Gson;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.ClickEvent.Action;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
-import sun.util.resources.cldr.aa.CalendarData_aa_ER;
 
 public class ThreadManager extends Thread implements Runnable {
 	
@@ -59,28 +60,37 @@ public class ThreadManager extends Thread implements Runnable {
 					HashMap<String, ItemAuctionData> ProcessedData = AuctionData.itemRegistry;
 					List<String> ItemList = new ArrayList<String>(ProcessedData.keySet());
 					
+					ItemAuctionData bestTrade = null;
+					
 					for(int i = 0; i < ItemList.size(); i++) {
 						String tag = ItemList.get(i);
 						ItemAuctionData data = ProcessedData.get(tag);
-						if(data.prices.size() > 20 && (data.minAuction.starting_bid > 400000 && data.getProfit() > 100 * Math.sqrt(data.minAuction.starting_bid)) && data.minAuction.starting_bid < 30000000 && data.pval() > 10 && data.pval() < 1000000) {
+						if(data.prices.size() > 20 && (data.getProfit() > 500000 && data.getProfit() > 250 * Math.sqrt(data.minAuction.starting_bid)) && data.minAuction.starting_bid < 30000000 && data.pval() > 10 && data.pval() < 1000000) {
 							
 							if(!usedKeys.containsKey(data.minAuction.uuid)) {
 								usedKeys.put(data.minAuction.uuid, 0);
-								String chat = "" + EnumChatFormatting.RED + EnumChatFormatting.BOLD + Helpers.niceName(tag) + EnumChatFormatting.RESET +"\n";
+								String chat = "\n"+EnumChatFormatting.DARK_RED+"==============\n" + EnumChatFormatting.RED + EnumChatFormatting.UNDERLINE + EnumChatFormatting.BOLD + Helpers.niceName(tag)  +"\n"+EnumChatFormatting.DARK_RED+"==============\n"+ EnumChatFormatting.RESET;
 				        		chat += EnumChatFormatting.DARK_GREEN + "Price: "+EnumChatFormatting.GOLD + "$" + Helpers.localeString(data.minAuction.starting_bid) + "\n";
 				        		chat += EnumChatFormatting.DARK_GREEN + "Average BIN: "+EnumChatFormatting.GOLD + "$" + Helpers.localeString((int)data.averagePrice()) + "\n";
 				        		chat += EnumChatFormatting.DARK_GREEN + "Profit: "+EnumChatFormatting.GOLD + "$" + Helpers.localeString((int)data.getProfit());
-				        		
+				        		ChatStyle style = new ChatStyle().setChatClickEvent(new ClickEvent(Action.RUN_COMMAND, "/viewauction " + data.minAuction.uuid));
+				        		ChatComponentText comp = new ChatComponentText(chat);
+				        		comp.setChatStyle(style);
+				        		if(Objects.isNull(bestTrade)) {
+				        			bestTrade = data;
+				        		}
+				        		else if(bestTrade.getProfit() < data.getProfit()) {
+				        			bestTrade = data;
+				        		}
 				        		//System.out.println(chat);
-				        		Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(chat));
-				        		Minecraft.getMinecraft().thePlayer.sendChatMessage("/viewauction " + data.minAuction.uuid);
-				        		
-				        		
-				        		
-				        		
+				        		Minecraft.getMinecraft().thePlayer.addChatMessage(comp);
 							}
 							
 						}
+					}
+					
+					if(!Objects.isNull(bestTrade)) {
+						Minecraft.getMinecraft().thePlayer.sendChatMessage("/viewauction " + bestTrade.minAuction.uuid);
 					}
             	}
     			else {

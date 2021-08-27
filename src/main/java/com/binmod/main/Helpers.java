@@ -103,7 +103,7 @@ public class Helpers {
 	}
 	
 	public static boolean isWhiteListed() {
-		String[] whitelistArr = {"BoschMods", "Stevey_G", "Player"};
+		String[] whitelistArr = {"BoschMods", "Player"};
 		List<String> whitelist = Arrays.asList(whitelistArr);
 		
 		if( Minecraft.getMinecraft() == null) {

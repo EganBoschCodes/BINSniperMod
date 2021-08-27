@@ -21,6 +21,8 @@ public class SnipeThread extends Thread {
 	private ThreadManager manager;
 	public String output;
 	
+	private long lastUpdated = 0;
+	
 	public SnipeThread(ThreadManager manage, int id, int minInd, int maxInd) {
 		this.index = minInd;
 		this.minIndex = minInd;
@@ -32,54 +34,76 @@ public class SnipeThread extends Thread {
 	}
 	
 	public void run() {
-		while(true) {
-			await(manager.runThreads[this.id], true);
-			//System.out.println("TIME TO GO: THREAD "+this.id);
-			manager.runThreads[this.id].set(false);
-			
-			CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-			
-			try {
+		CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+		
+		try {
+			while(true) {
+				await(manager.runThreads[this.id], true);
+				//System.out.println("TIME TO GO: THREAD "+this.id);
+				manager.runThreads[this.id].set(false);
 				
-				while(this.index < this.maxIndex) {
-					//System.out.println("ABOUT TO TRY PAGE " + this.index);
-					HttpGet getRequest = new HttpGet("https://api.hypixel.net/skyblock/auctions?page="+this.index);
-		            
-		            HttpResponse response = httpClient.execute(getRequest);
-		             
-		            int statusCode = response.getStatusLine().getStatusCode();
-		            if (statusCode != 200) 
-		            {
-		                throw new RuntimeException("Failed with HTTP error code : " + statusCode);
-		            }
-		             
-		            HttpEntity httpEntity = response.getEntity();
-		            String apiOutput = EntityUtils.toString(httpEntity);
-
-					//System.out.println("THREAD "+this.id+": AWAITING PARSING");
-		            await(manager.dataParsed[this.id], true);
-		            manager.dataParsed[this.id].set(false);
-		            this.index++;
-
-					//System.out.println("THREAD "+this.id+": SETTING DATA");
-		            this.output = apiOutput;
-		            manager.dataGathered[this.id].set(true);
-		            
-				}
-				manager.threadDone[this.id].set(true);
-			} catch (ParseException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} 
-			finally {
 				try {
-					httpClient.close();
+					boolean refreshed = false;
+					while(this.index < this.maxIndex) {
+						//System.out.println("ABOUT TO TRY PAGE " + this.index);
+						HttpGet getRequest = new HttpGet("https://api.hypixel.net/skyblock/auctions?page="+this.index);
+			            
+			            HttpResponse response = httpClient.execute(getRequest);
+			             
+			            int statusCode = response.getStatusLine().getStatusCode();
+			            if (statusCode != 200) 
+			            {
+			                throw new RuntimeException("Failed with HTTP error code : " + statusCode);
+			            }
+			             
+			            HttpEntity httpEntity = response.getEntity();
+			            String apiOutput = EntityUtils.toString(httpEntity);
+			            
+			            int updateIndex = apiOutput.indexOf("lastUpdated");
+			            long lastUpdatedRead = Long.parseLong(apiOutput.substring(updateIndex + 13, updateIndex + 26));
+			            
+			            if(lastUpdatedRead > this.lastUpdated || refreshed) {
+			            	if(!refreshed) {
+				            	this.lastUpdated = lastUpdatedRead;
+			            	}
+			            	refreshed = true;
+			            }
+			            else {
+			            	Thread.sleep(200);
+			            	continue;
+			            }
+			            
+			            if(lastUpdatedRead < this.lastUpdated) {
+			            	continue;
+			            }
+	
+						//System.out.println("THREAD "+this.id+": AWAITING PARSING");
+			            await(manager.dataParsed[this.id], true);
+			            manager.dataParsed[this.id].set(false);
+			            this.index++;
+	
+						//System.out.println("THREAD "+this.id+": SETTING DATA");
+			            this.output = apiOutput;
+			            manager.dataGathered[this.id].set(true);
+			            
+					}
+					manager.threadDone[this.id].set(true);
+				} catch (ParseException e) {
+					e.printStackTrace();
 				} catch (IOException e) {
 					e.printStackTrace();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
+	        }
+		}
+		finally {
+			try {
+				httpClient.close();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-        }
+		} 
 	}
 	
 	public void resetThread() {
