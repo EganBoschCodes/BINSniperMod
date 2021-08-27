@@ -59,19 +59,19 @@ public class SnipeThread extends Thread {
 					//System.out.println("THREAD "+this.id+": AWAITING PARSING");
 		            await(manager.dataParsed[this.id], true);
 		            manager.dataParsed[this.id].set(false);
+		            this.index++;
 
 					//System.out.println("THREAD "+this.id+": SETTING DATA");
 		            this.output = apiOutput;
 		            manager.dataGathered[this.id].set(true);
 		            
-		            this.index++;
 				}
 				manager.threadDone[this.id].set(true);
 			} catch (ParseException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
+			} 
 			finally {
 				try {
 					httpClient.close();

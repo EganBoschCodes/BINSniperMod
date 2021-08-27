@@ -9,6 +9,7 @@ import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.event.InputEvent;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 
 import com.binmod.datatypes.Auction;
@@ -105,6 +106,14 @@ public class Helpers {
 		String[] whitelistArr = {"BoschMods", "Stevey_G", "Player"};
 		List<String> whitelist = Arrays.asList(whitelistArr);
 		
+		if( Minecraft.getMinecraft() == null) {
+			return false;
+		}
+		
+		if( Minecraft.getMinecraft().thePlayer == null) {
+			return false;
+		}
+		
 		String s = ((EntityPlayer) Minecraft.getMinecraft().thePlayer).getName();
 		System.out.println("PLAYER NAME: "+s);
 		boolean wl = false;
@@ -115,4 +124,39 @@ public class Helpers {
 		return wl;
 	}
 	
+	public static String niceName(String pruned) {
+		String[] s = pruned.split(" ");
+		String output = "";
+		for(int i = 0; i < s.length;i++) {
+			s[i] = (s[i].charAt(0) + "").toUpperCase() + s[i].substring(1);
+		}
+		for(int i = 0; i < s.length - 1;i++) {
+			output += s[i] + " ";
+		}
+		return output + "(" + s[s.length - 1] + ")";
+	}
+	
+	public static String localeString(int n) {
+		String s = "" + n;
+		int counter = 0;
+		String output = "";
+		while(s.length() - counter > 0) {
+			output = s.charAt(s.length() - 1 - counter) + output;
+			if(counter % 3 == 2 && s.length() - counter > 1) {
+				output = "," + output;
+			}
+			counter++;
+		}
+		return output;
+	}
+	
+	public static String getTimeStamp() {
+
+		Calendar calendar = Calendar.getInstance();
+		int hour = calendar.get(Calendar.HOUR_OF_DAY);
+		int minute = calendar.get(Calendar.MINUTE);
+		int second = calendar.get(Calendar.SECOND);
+		return "[" + (hour > 9 ? hour : ("0" + hour)) + ":" + (minute > 9 ? minute : ("0" + minute)) + ":" + (second > 9 ? second : ("0" + second)) +"]";
+		
+	}
 }

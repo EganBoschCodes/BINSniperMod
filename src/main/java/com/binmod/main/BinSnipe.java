@@ -6,6 +6,8 @@ import com.binmod.async.ThreadManager;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -20,6 +22,8 @@ public class BinSnipe extends Thread
 {
     public static final String MODID = "binsnipe";
     public static final String VERSION = "1.0";
+    
+    public static boolean WHITELISTED = false;
 
     public static KeyBinding autoRun;
     public static KeyBinding toggleSniper;
@@ -69,15 +73,13 @@ public class BinSnipe extends Thread
     	}
     	
     	if(toggleSniper.isPressed()) {
-    		KeyBinding jump = FMLClientHandler.instance().getClient().gameSettings.keyBindJump;
-    		KeyBinding crouch = FMLClientHandler.instance().getClient().gameSettings.keyBindSneak;
     		this.ACTIVE = !this.ACTIVE;
     		System.out.println("ACTIVE:" + this.ACTIVE);
     		if(this.ACTIVE) {
-                KeyBinding.setKeyBindState(jump.getKeyCode(), true);
+    			Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD+"BIN Sniper: "+EnumChatFormatting.GREEN+"Activated!"));
     		}
     		else {
-    			KeyBinding.setKeyBindState(crouch.getKeyCode(), true);
+    			Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD+"BIN Sniper: "+EnumChatFormatting.RED+"Deactivated!"));
     		}
     	}
     	
