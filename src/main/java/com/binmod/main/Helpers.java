@@ -11,6 +11,7 @@ import java.awt.event.InputEvent;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Objects;
 
 import com.binmod.datatypes.Auction;
 
@@ -103,25 +104,30 @@ public class Helpers {
 	}
 	
 	public static boolean isWhiteListed() {
-		String[] whitelistArr = {"BoschMods", "Player"};
+		String[] whitelistArr = {"BoschMods", "Player", "aurakiller65212"};
 		List<String> whitelist = Arrays.asList(whitelistArr);
 		
-		if( Minecraft.getMinecraft() == null) {
+		if( Objects.isNull(Minecraft.getMinecraft())) {
 			return false;
 		}
 		
-		if( Minecraft.getMinecraft().thePlayer == null) {
+		if( Objects.isNull(Minecraft.getMinecraft().thePlayer) ) {
 			return false;
 		}
 		
-		String s = ((EntityPlayer) Minecraft.getMinecraft().thePlayer).getName();
-		System.out.println("PLAYER NAME: "+s);
-		boolean wl = false;
-		for(String name : whitelist) {
-			wl = wl || s.contains(name);
+		try {
+			String s = ((EntityPlayer) Minecraft.getMinecraft().thePlayer).getName();
+			System.out.println("PLAYER NAME: "+s);
+			boolean wl = false;
+			for(String name : whitelist) {
+				wl = wl || s.contains(name);
+			}
+			return wl;
+		}
+		catch(Exception e) {
+			return false;
 		}
 		
-		return wl;
 	}
 	
 	public static String niceName(String pruned) {
