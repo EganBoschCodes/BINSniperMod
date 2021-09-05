@@ -8,17 +8,35 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.event.InputEvent;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
+
 import com.binmod.datatypes.Auction;
+import com.binmod.datatypes.WhiteListReturn;
+import com.google.gson.Gson;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
 
 public class Helpers {
+	
+	private static boolean WHITELISTED = false;
+	public static boolean DEVBUILD = false;
 	
 	public static String pruneName(Auction input) {
 		
@@ -33,7 +51,7 @@ public class Helpers {
 		}
 		
 		name = name.replaceAll("[^\\x00-\\x7F]", "").trim();
-		String[] reforgesArr = {"NECROTIC", "ANCIENT", "FABLED", "GIANT", "GENTLE", "ODD", "FAST", "FAIR", "EPIC", "SHARP", "HEROIC", "SPICY", "LEGENDARY", "DIRTY", "GILDED", "WARPED", "BULKY", "SALTY", "TREACHEROUS", "STIFF", "LUCKY", "DEADLY", "FINE", "GRAND", "HASTY", "NEAT", "RAPID", "UNREAL", "AWKWARD", "RICH", "PRECISE", "HEADSTRONG", "CLEAN", "FIERCE", "HEAVY", "LIGHT", "MYTHIC", "PURE", "SMART", "TITANIC", "WISE", "PERFECT", "SPIKED", "RENOWNED", "CUBIC", "WARPED", "REINFORCED", "LOVING", "RIDICULOUS", "SUBMERGED", "JADED", "BIZARRE", "ITCHY", "OMINOUS", "PLEASANT", "PRETTY", "SHINY", "SIMPLE", "STRANGE", "VIVID", "GODLY", "DEMONIC", "FORCEFUL", "HURTFUL", "KEEN", "STRONG", "SUPERIOR", "UNPLEASANT", "ZEALOUS", "SILKY", "BLOODY", "SHADED", "SWEET", "FRUITFUL", "MAGNETIC", "REFINED", "BLESSED", "FLEET", "STELLAR", "MITHRAIC", "AUSPICIOUS", "HEATED", "AMBERED"};
+		String[] reforgesArr = {"NECROTIC", "ANCIENT", "FABLED", "GIANT", "GENTLE", "ODD", "FAST", "FAIR", "EPIC", "SHARP", "HEROIC", "SPICY", "LEGENDARY", "DIRTY", "GILDED", "WARPED", "BULKY", "SALTY", "TREACHEROUS", "STIFF", "LUCKY", "DEADLY", "FINE", "GRAND", "HASTY", "NEAT", "RAPID", "UNREAL", "AWKWARD", "RICH", "PRECISE", "HEADSTRONG", "CLEAN", "FIERCE", "HEAVY", "LIGHT", "MYTHIC", "PURE", "SMART", "TITANIC", "WISE", "PERFECT", "SPIKED", "RENOWNED", "CUBIC", "WARPED", "REINFORCED", "LOVING", "RIDICULOUS", "BIZARRE", "ITCHY", "OMINOUS", "PLEASANT", "PRETTY", "SHINY", "SIMPLE", "STRANGE", "VIVID", "GODLY", "DEMONIC", "FORCEFUL", "HURTFUL", "KEEN", "STRONG", "SUPERIOR", "UNPLEASANT", "ZEALOUS", "SILKY", "BLOODY", "SHADED", "SWEET", "FRUITFUL", "MAGNETIC", "REFINED", "BLESSED", "FLEET", "STELLAR", "MITHRAIC", "AUSPICIOUS", "HEATED", "AMBERED"};
 		List<String> reforges = Arrays.asList(reforgesArr);
 		
 		String tag = name.toUpperCase();
@@ -103,9 +121,38 @@ public class Helpers {
 		}   
 	}
 	
+	public static String getName() {
+		if( Objects.isNull(Minecraft.getMinecraft())) {
+			return "";
+		}
+		
+		if( Objects.isNull(Minecraft.getMinecraft().thePlayer) ) {
+			return "";
+		}
+		
+		try {
+			String s = ((EntityPlayer) Minecraft.getMinecraft().thePlayer).getName();
+			return s;
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			return "";
+		}
+	}
+	
+	public static String getNameHash() {
+		if(DEVBUILD) {
+			return "16765c3b8b6a579759c7006d0825b06f5879a34bd1dccf1935fa3fc83ecbe44e";
+		}
+		
+		return sha256(getName()+"_verify");
+	}
+	
 	public static boolean isWhiteListed() {
-		String[] whitelistArr = {"BoschMods", "Player", "aurakiller65212"};
-		List<String> whitelist = Arrays.asList(whitelistArr);
+		
+		if(WHITELISTED) {
+			return true;
+		}
 		
 		if( Objects.isNull(Minecraft.getMinecraft())) {
 			return false;
@@ -114,17 +161,46 @@ public class Helpers {
 		if( Objects.isNull(Minecraft.getMinecraft().thePlayer) ) {
 			return false;
 		}
+		CloseableHttpClient httpClient = HttpClientBuilder.create().build();
 		
 		try {
 			String s = ((EntityPlayer) Minecraft.getMinecraft().thePlayer).getName();
-			System.out.println("PLAYER NAME: "+s);
-			boolean wl = false;
-			for(String name : whitelist) {
-				wl = wl || s.contains(name);
+			
+			if(s.substring(0, 6).contains("Player")) {
+				WHITELISTED = true;
+				DEVBUILD = true;
+				return true;
 			}
-			return wl;
+			
+			//MAKE S GET HASHED
+			HttpGet getRequest = new HttpGet(BinSnipe.API_HOST+"/whitelist/username="+Helpers.sha256(s+"_verify"));
+            
+            HttpResponse response = httpClient.execute(getRequest);
+             
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != 200) 
+            {
+                throw new RuntimeException("Failed with HTTP error code : " + statusCode);
+            }
+             
+            HttpEntity httpEntity = response.getEntity();
+            String apiOutput = EntityUtils.toString(httpEntity);
+            
+            Gson GSON = new Gson();
+			WhiteListReturn resp =  GSON.fromJson(apiOutput, WhiteListReturn.class);
+			
+			httpClient.close();
+			if(resp.status == 200 && resp.whitelisted) {
+				WHITELISTED = true;
+			}
+			return WHITELISTED;
 		}
 		catch(Exception e) {
+			try {
+				httpClient.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 			return false;
 		}
 		
@@ -165,4 +241,38 @@ public class Helpers {
 		return "[" + (hour > 9 ? hour : ("0" + hour)) + ":" + (minute > 9 ? minute : ("0" + minute)) + ":" + (second > 9 ? second : ("0" + second)) +"]";
 		
 	}
+	
+	public static String sha256(String str) {
+		MessageDigest digest;
+		try {
+			digest = MessageDigest.getInstance("SHA-256");
+			byte[] hash = digest.digest(str.getBytes(StandardCharsets.UTF_8));
+			StringBuilder hexString = new StringBuilder(2 * hash.length);
+		    for (int i = 0; i < hash.length; i++) {
+		        String hex = Integer.toHexString(0xff & hash[i]);
+		        if(hex.length() == 1) {
+		            hexString.append('0');
+		        }
+		        hexString.append(hex);
+		    }
+		    return hexString.toString();
+		} catch (NoSuchAlgorithmException e) {
+			return "ERROR! NO SUCH ALGORITHM";
+		}
+	}
+	
+	public static double cleanRound(double d, int i) {
+		return ((double)Math.round(d * Math.pow(10, i))) / Math.pow(10, i);
+	}
+	
+	public static void sendTimestampedChat(String s) {
+		Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + getTimeStamp()+": "+EnumChatFormatting.WHITE+s));
+	}
+	
+
+	public static void sendError(String s) {
+		Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + getTimeStamp()+": "+EnumChatFormatting.RED+s));
+	}
 }
+
+
