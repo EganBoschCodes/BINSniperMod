@@ -1,0 +1,6 @@
+{
+  "notify": {
+    "subtitle": "binmod.alert.notify",
+    "sounds": [ "binmod:trade_notif" ]
+  }
+}

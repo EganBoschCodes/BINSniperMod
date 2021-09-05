@@ -26,6 +26,7 @@ import org.apache.http.util.EntityUtils;
 
 import com.binmod.datatypes.Auction;
 import com.binmod.datatypes.WhiteListReturn;
+import com.binmod.sounds.NotifSound;
 import com.google.gson.Gson;
 
 import net.minecraft.client.Minecraft;
@@ -267,6 +268,10 @@ public class Helpers {
 	
 	public static void sendTimestampedChat(String s) {
 		Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD + getTimeStamp()+": "+EnumChatFormatting.WHITE+s));
+	}
+	
+	public static void playNotification() {
+		Minecraft.getMinecraft().getSoundHandler().playSound(new NotifSound());
 	}
 	
 

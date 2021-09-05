@@ -110,6 +110,7 @@ public class ThreadManager extends Thread implements Runnable {
             	}
             	if(!Objects.isNull(bestTrade)) {
 					Minecraft.getMinecraft().thePlayer.sendChatMessage("/viewauction " + bestTrade.uuid);
+			        Helpers.playNotification();
 				}
 
             	this.lastUpdated = tradeList.timestamp;
@@ -172,6 +173,7 @@ public class ThreadManager extends Thread implements Runnable {
 		
 		if(!Objects.isNull(bestTrade)) {
 			Minecraft.getMinecraft().thePlayer.sendChatMessage("/viewauction " + bestTrade.minAuction.uuid);
+	        Helpers.playNotification();
 		}
 		Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD+Helpers.getTimeStamp()+": "+EnumChatFormatting.WHITE+"API refreshed "+ Helpers.cleanRound(((double)(System.currentTimeMillis() - AuctionData.lastUpdated))/1000, 1) + " sec ago."));
 		
