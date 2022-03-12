@@ -5,6 +5,7 @@ import java.io.File;
 import org.lwjgl.input.Keyboard;
 
 import com.binmod.async.ThreadManager;
+import com.binmod.commands.BlackList;
 import com.binmod.commands.ChangeMinProfit;
 import com.binmod.commands.ChangeProfitScale;
 import com.binmod.commands.Ping;
@@ -31,7 +32,7 @@ import net.minecraftforge.fml.common.gameevent.InputEvent;
 public class BinSnipe
 {
     public static final String MODID = "binsnipe";
-    public static final String VERSION = "1.0";
+    public static final String VERSION = "4.0";
     
     public static boolean WHITELISTED = false;
 
@@ -46,7 +47,7 @@ public class BinSnipe
     
     public static Configuration config;
     
-    private ThreadManager threadManager = new ThreadManager();
+    private static ThreadManager threadManager;
     
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
@@ -58,6 +59,8 @@ public class BinSnipe
         ThreadManager.MODE = config.get("binsniper", "mode", 0);
         ThreadManager.MINPROFIT = config.get("binsniper", "minprofit", 500000);
         ThreadManager.PROFITSCALE = config.get("binsniper", "profitscale", 250);
+        String[] emptyArray = {};
+        ThreadManager.BLACKLIST = config.get("binsniper", "blacklist", emptyArray);
         
     }
     
@@ -83,7 +86,8 @@ public class BinSnipe
         ClientCommandHandler.instance.registerCommand(new ChangeMinProfit());
         ClientCommandHandler.instance.registerCommand(new ChangeProfitScale());
         ClientCommandHandler.instance.registerCommand(new Ping());
-        
+        ClientCommandHandler.instance.registerCommand(new BlackList());
+
         threadManager = new ThreadManager();
         threadManager.start();
         
@@ -104,14 +108,23 @@ public class BinSnipe
     	}
     	
     	if(toggleSniper.isPressed()) {
-    		this.ACTIVE = !this.ACTIVE;
-    		System.out.println("ACTIVE:" + this.ACTIVE);
-    		if(this.ACTIVE) {
-    			Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD+"BIN Sniper: "+EnumChatFormatting.GREEN+"Activated!"));
+    		if(!WHITELISTED) {
+				WHITELISTED = Helpers.isWhiteListed();
+			}
+    		if(WHITELISTED) {
+    			this.ACTIVE = !this.ACTIVE;
+        		System.out.println("ACTIVE:" + this.ACTIVE);
+        		if(this.ACTIVE) {
+        			Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD+"BIN Sniper: "+EnumChatFormatting.GREEN+"Activated!"));
+        		}
+        		else {
+        			Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD+"BIN Sniper: "+EnumChatFormatting.RED+"Deactivated!"));
+        		}
     		}
     		else {
-    			Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText(EnumChatFormatting.GOLD+"BIN Sniper: "+EnumChatFormatting.RED+"Deactivated!"));
+    			Helpers.sendTimestampedChat("You aren't whitelisted! Piss off");
     		}
+    		
     	}
     	
     	if(openAuctionHouse.isPressed()) {

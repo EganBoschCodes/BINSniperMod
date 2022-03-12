@@ -53,6 +53,7 @@ public class ThreadManager extends Thread implements Runnable {
     public static Property MODE;
     public static Property MINPROFIT;
     public static Property PROFITSCALE;
+    public static Property BLACKLIST;
     
     boolean APIFirstAwait = true;
     
@@ -140,6 +141,10 @@ public class ThreadManager extends Thread implements Runnable {
 		AuctionHouse AuctionData = getAuctionData();
 		HashMap<String, ItemAuctionData> ProcessedData = AuctionData.itemRegistry;
 		List<String> ItemList = new ArrayList<String>(ProcessedData.keySet());
+		String[] BlackList = ThreadManager.BLACKLIST.getStringList();
+		for(int i = 0; i < BlackList.length; i++) {
+			BlackList[i] = BlackList[i].toLowerCase();
+		}
 		
 		ItemAuctionData bestTrade = null;
 		
@@ -147,8 +152,12 @@ public class ThreadManager extends Thread implements Runnable {
 			String tag = ItemList.get(i);
 			ItemAuctionData data = ProcessedData.get(tag);
 			if(data.prices.size() > 20 && (data.getProfit() > this.MINPROFIT.getInt() && data.getProfit() > this.PROFITSCALE.getInt() * Math.sqrt(data.minAuction.starting_bid)) && data.minAuction.starting_bid < 30000000 && data.pval() > 10 && data.pval() < 1000000) {
+				boolean blackListed = false;
+				for(int b = 0; b < BlackList.length; b++) {
+					blackListed = blackListed || BlackList[i].contains(Helpers.niceName(tag).toLowerCase());
+				}
 				
-				if(!usedKeys.containsKey(data.minAuction.uuid)) {
+				if(!usedKeys.containsKey(data.minAuction.uuid) && !blackListed) {
 					usedKeys.put(data.minAuction.uuid, 0);
 					String chat = "\n"+EnumChatFormatting.DARK_RED+"==============\n" + EnumChatFormatting.RED + EnumChatFormatting.UNDERLINE + EnumChatFormatting.BOLD + Helpers.niceName(tag)  +"\n"+EnumChatFormatting.DARK_RED+"==============\n"+ EnumChatFormatting.RESET;
 	        		chat += EnumChatFormatting.DARK_GREEN + "Price: "+EnumChatFormatting.GOLD + "$" + Helpers.localeString(data.minAuction.starting_bid) + "\n";
@@ -185,11 +194,7 @@ public class ThreadManager extends Thread implements Runnable {
 		this.httpClient = HttpClientBuilder.create().build();
 		try {
 			while(true) {
-				if(!BinSnipe.WHITELISTED) {
-					BinSnipe.WHITELISTED = Helpers.isWhiteListed();
-					//System.out.println("WHITELISTED: "+BinSnipe.WHITELISTED);
-				}
-    			if(BinSnipe.ACTIVE && (BinSnipe.WHITELISTED || Helpers.getName().contains("Player"))) {
+    			if(BinSnipe.ACTIVE && BinSnipe.WHITELISTED) {
     				
     				switch(this.MODE.getInt()) {
     				case 0:

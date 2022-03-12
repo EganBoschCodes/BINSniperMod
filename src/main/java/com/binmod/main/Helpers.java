@@ -48,7 +48,11 @@ public class Helpers {
 			int firstNewline = input.item_lore.indexOf('\n') > 0 ? input.item_lore.indexOf('\n') : Integer.MAX_VALUE;
 			
 			int end = Math.min(firstComma, firstNewline);
-			name = input.item_lore.substring(2, end);
+			int start = 2;
+			while(!Character.isLetterOrDigit(input.item_lore.charAt(start))) {
+				start += 2;
+			}
+			name = input.item_lore.substring(start, end);
 		}
 		
 		name = name.replaceAll("[^\\x00-\\x7F]", "").trim();
@@ -156,47 +160,59 @@ public class Helpers {
 		}
 		
 		if( Objects.isNull(Minecraft.getMinecraft())) {
+			//sendTimestampedChat("Minecraft is breaking...");
 			return false;
 		}
 		
 		if( Objects.isNull(Minecraft.getMinecraft().thePlayer) ) {
+			//sendTimestampedChat("Player is breaking...");
 			return false;
 		}
 		CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+		//sendTimestampedChat("Opening web client");
 		
 		try {
 			String s = ((EntityPlayer) Minecraft.getMinecraft().thePlayer).getName();
 			
-			if(s.substring(0, 6).contains("Player")) {
+			if(s.length() >= 6 && s.substring(0, 6).contains("Player")) {
 				WHITELISTED = true;
 				DEVBUILD = true;
 				return true;
 			}
 			
 			//MAKE S GET HASHED
+			sendTimestampedChat("Pinging API...");
 			HttpGet getRequest = new HttpGet(BinSnipe.API_HOST+"/whitelist/username="+Helpers.sha256(s+"_verify"));
             
             HttpResponse response = httpClient.execute(getRequest);
+    		sendTimestampedChat("Response retrieved.");
              
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != 200) 
             {
+        		//sendTimestampedChat("Ruh roh");
                 throw new RuntimeException("Failed with HTTP error code : " + statusCode);
             }
              
             HttpEntity httpEntity = response.getEntity();
             String apiOutput = EntityUtils.toString(httpEntity);
+    		//sendTimestampedChat("API RESPONSE: "+apiOutput);
             
             Gson GSON = new Gson();
 			WhiteListReturn resp =  GSON.fromJson(apiOutput, WhiteListReturn.class);
 			
 			httpClient.close();
 			if(resp.status == 200 && resp.whitelisted) {
+				//sendTimestampedChat("You are whitelisted!");
 				WHITELISTED = true;
+			}
+			else {
+				//sendTimestampedChat(resp.status+ (resp.status == 200 ? ": "+resp.whitelisted : ""));
 			}
 			return WHITELISTED;
 		}
 		catch(Exception e) {
+    		sendTimestampedChat(e.toString());
 			try {
 				httpClient.close();
 			} catch (IOException e1) {

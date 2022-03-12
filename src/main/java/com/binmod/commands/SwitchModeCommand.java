@@ -4,9 +4,11 @@ import com.binmod.async.ThreadManager;
 import com.binmod.main.BinSnipe;
 import com.binmod.main.Helpers;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
 
 public class SwitchModeCommand extends CommandBase {
 
@@ -25,6 +27,9 @@ public class SwitchModeCommand extends CommandBase {
         ThreadManager.MODE.set(1 - ThreadManager.MODE.getInt());
         BinSnipe.config.save();
         Helpers.sendTimestampedChat("Changed mode to " + (ThreadManager.MODE.getInt() > 0 ? "local." : "API-based."));
+        Helpers.playNotification();
+        
+        //String mainPlayer = ((EntityPlayer)Minecraft.getMinecraft().thePlayer).getHeldItem().getItem().getItemStackDisplayName(null);
     }
     
     @Override
