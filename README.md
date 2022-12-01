@@ -1,1 +1,9 @@
-# BINSniperMod
+# BIN Sniper Mod
+
+This was a mod I had written with the goal of making a lot of money on the popular Minecraft MMORPG server, Hypixel Skyblock. It worked quite well, earning me a substantial amount of money and allowing myself and those who I sold the mod to make an incredible amount of money on the server.
+
+The mod worked by utilizing the Hypixel API and Skyblock Auction House. In the game, there is a centralized market that any player on the server can list their goods for an asking price. These auctions could either be timed, selling to the highest bidder, or it could be a single-price, instant buy offer. A not-uncommon occurance was human error causing someone to list an auction significantly beneath the market value of the item, either from an ignorance to the proper value or by typing the incorrect number of zeros. However, these auctions could be for any of a number of items, and with over 60,000 auctions live at any time with thousands of others scouring the market looking for deals, it was unlikely to happen upon these by chance.
+
+I then created this mod. It would download the auction data from Hypixel's public API, parse the data, sort it, determine the market value for every item in the game, and look for deals. When it found one, it would automatically pop it onto the users screen, where they could rapidly click buy, then resell the item at market value. This took me from having a lifetime earnings of about 250 million coins after multiple years of play (albiet off and on), to 3 billion in about a month. Tragically several patches to the way the auction system works have made this mod outdated.
+
+The code itself is not my greatest work. I made multithreaded data retriever before I learned about how to actually syncronize and properly multithread in Java, and so thread synchronicity was purely operated by me making some very sketchy boolean flag objects. I promise I have learned in the time since, look at my PigZJ repository from my CS 131 class here at UCLA.
